@@ -375,6 +375,11 @@ if(OPENVDB)
 		list(APPEND INCLUDE_PATHS ${OPENVDB_INCLUDE_DIR})
 		list(APPEND F_LIB_PATHS ${OPENVDB_LIBRARY_DIR})
 		list(APPEND F_LIBS ${OPENVDB_LIBRARY})
+
+		if(APPLE)
+			list(APPEND F_LIBS Half)
+		endif()
+
 		add_definitions(${OPENVDB_DEFINITIONS})
 	else()
 		if (WIN32)
