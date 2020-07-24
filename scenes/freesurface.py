@@ -16,7 +16,7 @@ s.timestep  = 0.15
 
 # scene file params
 ghostFluid  = True
-doOpen      = False
+doOpen      = True
 accuracy    = 5e-4
 # using fast marching is more accurate, but currently causes asymmetries
 useMarching = False
