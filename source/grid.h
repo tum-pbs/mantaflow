@@ -298,6 +298,7 @@ public:
 		TypeOutflow  = 16,
 		TypeOpen     = 32,
 		TypeStick    = 64,
+		TypeSolid	 = 128,
 		// internal use only, for fast marching
 		TypeReserved = 256,
 		// 2^10 - 2^14 reserved for moving obstacles

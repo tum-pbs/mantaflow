@@ -5,7 +5,8 @@ from manta import *
 import os
 
 # mesh to load
-meshfile = '../resources/simpletorus.obj'
+# meshfile = '../resources/simpletorus.obj'
+meshfile = './resources/simpletorus.obj'
 mantaMsg("Loading %s. Note: relative path by default, assumes this scene is called from the 'scenes' directory.")
 
 # resolution for level set / output mesh

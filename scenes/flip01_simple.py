@@ -29,8 +29,8 @@ pVel     = pp.create(PdataVec3)
 # scene setup
 flags.initDomain(boundaryWidth=0) 
 # enable one of the following
-fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # breaking dam
-#fluidbox = Box( parent=s, p0=gs*vec3(0.4,0.72,0.4), p1=gs*vec3(0.6,0.92,0.6)) # centered falling block
+# fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # breaking dam
+fluidbox = Box( parent=s, p0=gs*vec3(0.4,0.72,0.4), p1=gs*vec3(0.6,0.92,0.6)) # centered falling block
 phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!

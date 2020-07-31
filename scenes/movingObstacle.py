@@ -3,7 +3,7 @@
 #
 from manta import *
 
-dim = 2
+dim = 3
 res = 50
 gs  = vec3(res,res, 1 if dim==2 else res )
 s   = Solver(name='main', gridSize = gs, dim=dim)
@@ -37,7 +37,7 @@ if (GUI):
 	#gui.pause()
 	
 #main loop
-for t in range(400):
+for t in range(1000):
 	mantaMsg('\nFrame %i' % (s.frame))
 		
 	advectSemiLagrange(flags=flags, vel=vel, grid=density, order=2) 
