@@ -1,11 +1,13 @@
 /******************************************************************************
  *
- * Plugins for Position-Based Dynamics (PDB)
+ * Plugins for Position-Based Dynamics (PBD)
  * Copyright 2020 Cesar Rodriguez, James Mossell 
  * 
- * The implementation is based on the publication An efficient FLIP and shape
- * matching coupled method for fluid-solid and two-phase fluid simulations by
- * Yang Gao, Shuai Li, Hong Qin, Yinghao Xu, and Aimin Hao
+ * The implementation is based on the publication: 
+ * 
+ * Gao, Y., Li, S., Qin, H. et al. An efficient FLIP and shape matching 
+ * coupled method for fluid–solid and two-phase fluid simulations. 
+ * Vis Comput 35, 1741–1753 (2019). 
  * https://doi.org/10.1007/s00371-018-1569-8
  *
  * This source code is free and distributed under the terms of the
@@ -22,7 +24,42 @@
 
 using namespace std;
 
-namespace Manta { 
+namespace Manta {
+
+KERNEL (bnd=boundaryWidth)
+void KnUpdateFlagsSolid(FlagGrid& flags, const MACGrid* fractions, const Grid<Real>& phiObs, const Grid<Real>* phiOut, const Grid<Real>* phiIn, int boundaryWidth) {
+
+	bool isObs = false;
+	if(fractions) {
+		Real f = 0.;
+		f += fractions->get(i  ,j,k).x;
+		f += fractions->get(i+1,j,k).x;
+		f += fractions->get(i,j  ,k).y;
+		f += fractions->get(i,j+1,k).y;
+		if (flags.is3D()) {
+		f += fractions->get(i,j,k  ).z;
+		f += fractions->get(i,j,k+1).z; }
+		if(f==0.) isObs = true;
+	} else {
+		if(phiObs(i,j,k) < 0.) isObs = true;
+	}
+
+	bool isOutflow = false;
+	bool isInflow = false;
+	if (phiOut && (*phiOut)(i,j,k) < 0.) isOutflow = true;
+	if (phiIn && (*phiIn)(i,j,k) < 0.) isInflow = true;
+
+	if (isObs)          flags(i,j,k) = FlagGrid::TypeObstacle;
+	else if (isInflow)  flags(i,j,k) = (FlagGrid::TypeFluid | FlagGrid::TypeInflow);
+	else if (isOutflow) flags(i,j,k) = (FlagGrid::TypeEmpty | FlagGrid::TypeOutflow);
+	else                flags(i,j,k) = FlagGrid::TypeEmpty;
+}
+
+//! update obstacle and outflow flags from levelsets
+//! optionally uses fill fractions for obstacle
+PYTHON() void setSolidFlags(FlagGrid& flags, const Grid<Real>& phiObs, const MACGrid* fractions=NULL, const Grid<Real>* phiOut=NULL, const Grid<Real>* phiIn=NULL, int boundaryWidth=1) {
+	KnUpdateFlagsSolid(flags, fractions, phiObs, phiOut, phiIn, boundaryWidth);
+}
 
 	//! add constant force between fl/fl and fl/em cells
 	KERNEL(bnd=1) void KnApplyForce(const FlagGrid& flags, MACGrid& vel, Vec3 force, const Grid<Real>* exclude, bool additive) {

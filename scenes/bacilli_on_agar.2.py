@@ -80,10 +80,32 @@ for t in range(2500):
 	# Algorithm 1 in Gao, 2018
 	# 1: Advect velocities of particles 
 	pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False )
+	
+	# make sure we have velocities throughout liquid region
+	mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
+	extrapolateMACFromWeight(vel=vel , distance=2, weight=tmpVec3)  # note, tmpVec3 could be free'd now...
+	markFluidCells(parts=pp, flags=flags)
+
+	# create approximate surface level set, resample particles
+	gridParticleIndex(parts=pp , flags=flags, indexSys=pindex, index=gpi)
+	unionParticleLevelset(pp, pindex, flags, gpi, phi , radiusFactor) 
+	resetOutflow(flags=flags,parts=pp,index=gpi,indexSys=pindex) 
+	# extend levelset somewhat, needed by particle resampling in adjustNumber
+	extrapolateLsSimple(phi=phi, distance=4, inside=True); 
+
+	setWallBcs(flags=flags, vel=vel)	
+	solvePressure(flags=flags, vel=vel, pressure=pressure, phi=phi)
+
+	# set source grids for resampling, used in adjustNumber!
+	pVel.setSource( vel, isMAC=True )
+	adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi, radiusFactor=radiusFactor ) 
+
+	# make sure we have proper velocities
+	extrapolateMACSimple( flags=flags, vel=vel )
 
 	# 2: Enforce external forces (gravity)
 	addGravity(flags=flags, vel=vel, gravity=(0,-0.001,0))
-
+	
 	if t == 3:
 		force.setConst(vec3(0.0, 0.0, 0.5))
 		addForceField(flags=flags, vel=vel, force=force)
@@ -100,37 +122,11 @@ for t in range(2500):
 	# 12: else continue
 	# 13: Correct boundary conditions
 	# 14: Conduct the mechanism of penetration prevention
+	
 	# 15: Update the velocities and positions of all particles
-	# 16: Update particles’ flags
-
-	# make sure we have velocities throughout liquid region
-	mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
-	extrapolateMACFromWeight(vel=vel , distance=2, weight=tmpVec3)  # note, tmpVec3 could be free'd now...
-	markFluidCells(parts=pp, flags=flags)
-
-	# create approximate surface level set, resample particles
-	gridParticleIndex(parts=pp , flags=flags, indexSys=pindex, index=gpi)
-	unionParticleLevelset(pp, pindex, flags, gpi, phi , radiusFactor) 
-	resetOutflow(flags=flags,parts=pp,index=gpi,indexSys=pindex) 
-	# extend levelset somewhat, needed by particle resampling in adjustNumber
-	extrapolateLsSimple(phi=phi, distance=4, inside=True); 
-
-	# forces & pressure solve
-	
-	
-	
-	
-	setWallBcs(flags=flags, vel=vel)	
-	solvePressure(flags=flags, vel=vel, pressure=pressure, phi=phi)
-
-	# set source grids for resampling, used in adjustNumber!
-	pVel.setSource( vel, isMAC=True )
-	adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi, radiusFactor=radiusFactor ) 
-
-	# make sure we have proper velocities
-	extrapolateMACSimple( flags=flags, vel=vel )
-	
 	flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0.97 )
+
+	# 16: Update particles’ flags
 
 	if (dim==3):
 		phi.createMesh(mesh)
