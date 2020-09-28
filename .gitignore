@@ -10,8 +10,7 @@ waveletNoiseTileDouble.bin
 build
 doc
 tensorflow/mantaGen/datasets
-scenes/results
-scenes/frames
+notebooks/results
 
 # macos
 .DS_Store
