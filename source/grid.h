@@ -312,10 +312,14 @@ public:
 	inline bool isObstacle(int i, int j, int k) const { return get(i,j,k) & TypeObstacle; }
 	inline bool isObstacle(const Vec3i& pos) const { return get(pos) & TypeObstacle; }
 	inline bool isObstacle(const Vec3& pos) const { return getAt(pos) & TypeObstacle; }
-	inline bool isFluid(IndexInt idx) const { return get(idx) & TypeFluid; }
-	inline bool isFluid(int i, int j, int k) const { return get(i,j,k) & TypeFluid; }
-	inline bool isFluid(const Vec3i& pos) const { return get(pos) & TypeFluid; }
-	inline bool isFluid(const Vec3& pos) const { return getAt(pos) & TypeFluid; }
+
+	// Major Hack!!!
+
+	inline bool isFluid(IndexInt idx) const { return get(idx) & (TypeFluid || TypeSolid); }
+	inline bool isFluid(int i, int j, int k) const { return get(i,j,k) & (TypeFluid || TypeSolid); }
+	inline bool isFluid(const Vec3i& pos) const { return get(pos) & (TypeFluid || TypeSolid); }
+	inline bool isFluid(const Vec3& pos) const { return getAt(pos) & (TypeFluid || TypeSolid); }
+	
 	inline bool isInflow(IndexInt idx) const { return get(idx) & TypeInflow; }
 	inline bool isInflow(int i, int j, int k) const { return get(i,j,k) & TypeInflow; }
 	inline bool isInflow(const Vec3i& pos) const { return get(pos) & TypeInflow; }
@@ -336,6 +340,10 @@ public:
 	inline bool isStick(int i, int j, int k) const { return get(i,j,k) & TypeStick; }
 	inline bool isStick(const Vec3i& pos) const { return get(pos) & TypeStick; }
 	inline bool isStick(const Vec3& pos) const { return getAt(pos) & TypeStick; }
+	inline bool isSolid(IndexInt idx) const { return get(idx) & TypeSolid; }
+	inline bool isSolid(int i, int j, int k) const { return get(i,j,k) & TypeSolid; }
+	inline bool isSolid(const Vec3i& pos) const { return get(pos) & TypeSolid; }
+	inline bool isSolid(const Vec3& pos) const { return getAt(pos) & TypeSolid; }
 
 	
 	void InitMinXWall(const int &boundaryWidth, Grid<Real>& phiWalls);

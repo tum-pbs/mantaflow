@@ -49,23 +49,18 @@ agar = Box(parent=solver, p0=gs*vec3(0,0,0), p1=gs*vec3(1.0,0.1,1.0))
 phi = agar.computeLevelset()
 
 # Bacillus
-center = vec3(0.5,0.1125,0.5)
-radius = 0.0125
+center = vec3(0.5,0.2,0.5)
+radius = 0.05
 zpoint = vec3(0, 0, 0.1)
-# The mantaflow cylinder has a capsule-like geometry
-bacillus = Cylinder(parent=solver, center=gs*center, radius=res*radius, z=gs*zpoint)
+bacillus = Cylinder(parent=solver, center=gs*center, radius=res*radius, z=gs*zpoint) # The mantaflow cylinder has a capsule-like geometry
 phiBacillus = bacillus.computeLevelset()
-setObstacleFlags(flags=flags, phiObs=phiBacillus) 
+setSolidFlags(flags=flags, phiSolid=phiBacillus)
 
 # Join the agar and bacillus levelsets
 phi.join(phiBacillus)
 
 flags.updateFromLevelset(phi)
 sampleLevelsetWithParticles(phi=phi, flags=flags, parts=pp, discretization=2, randomness=0.05)
-
-# save reference any grid, to automatically determine grid size
-if saveParts:
-	pressure.save('ref_flipParts_0000.uni');
 
 if 1 and (GUI):
 	gui = Gui()
@@ -74,8 +69,11 @@ if 1 and (GUI):
    
 
 #main loop
-for t in range(2500):
+for t in range(2500):	
 	# mantaMsg('\nFrame %i, simulation time %f' % (solver.frame, solver.timeTotal))
+
+	# if t==0:
+	# 	flags.printGrid()
 	
 	# Algorithm 1 in Gao, 2018
 	# 1: Advect velocities of particles 
@@ -106,15 +104,18 @@ for t in range(2500):
 	# 2: Enforce external forces (gravity)
 	addGravity(flags=flags, vel=vel, gravity=(0,-0.001,0))
 	
-	if t == 3:
-		force.setConst(vec3(0.0, 0.0, 0.5))
-		addForceField(flags=flags, vel=vel, force=force)
+	# if t == 3:
+	# 	force.setConst(vec3(0.0, 0.0, 0.5))
+	# 	addForceField(flags=flags, vel=vel, force=force)
 
+	# This is likely FLIP
 	# 3: Verify fluid and solid particle flags via Fsolid, Ffluid
 	# 4: Map all the particles to grid ug ← up, xg ← xp
 	# 5: Compute level set Φ and velocity on grid ug
 	# 6: Project up ← ug,xp ← xg0 + ugΔt
 	# 7: if particle ∈ Fsolid then
+	
+	# This is PBD
 	# 8: 	Project shape matching constraint
 	# 9: 	Compute target position g
 	# 10: 	Update x∗+=α 􏰉g − x 􏰊
@@ -130,14 +131,14 @@ for t in range(2500):
 
 	if (dim==3):
 		phi.createMesh(mesh)
-		mesh.fromShape(bacillus, append=True)
+		# mesh.fromShape(bacillus, append=True)
 
 	#solver.printMemInfo()
-	solver.step()
 
-	# generate data for flip03_gen.py surface generation scene
-	# if saveParts:
-	# 	pp.save( 'flipParts_%04d.uni' % t );
+	if t == 20:
+		flags.printGrid()
+
+	solver.step()
 
 
 

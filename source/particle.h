@@ -521,6 +521,7 @@ void ParticleSystem<S>::advectInGrid(
 {
 	// position clamp requires old positions, backup
 	ParticleDataImpl<Vec3> *posOld = NULL;
+	
 	if(!deleteInObstacle) {
 		posOld = new ParticleDataImpl<Vec3>(this->getParent());
 		posOld->resize(mData.size());
