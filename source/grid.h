@@ -313,33 +313,36 @@ public:
 	inline bool isObstacle(const Vec3i& pos) const { return get(pos) & TypeObstacle; }
 	inline bool isObstacle(const Vec3& pos) const { return getAt(pos) & TypeObstacle; }
 
-	// Major Hack!!!
-
-	inline bool isFluid(IndexInt idx) const { return get(idx) & (TypeFluid || TypeSolid); }
-	inline bool isFluid(int i, int j, int k) const { return get(i,j,k) & (TypeFluid || TypeSolid); }
-	inline bool isFluid(const Vec3i& pos) const { return get(pos) & (TypeFluid || TypeSolid); }
-	inline bool isFluid(const Vec3& pos) const { return getAt(pos) & (TypeFluid || TypeSolid); }
+	inline bool isFluid(IndexInt idx) const { return get(idx) & TypeFluid; }
+	inline bool isFluid(int i, int j, int k) const { return get(i,j,k) & TypeFluid; }
+	inline bool isFluid(const Vec3i& pos) const { return get(pos) & TypeFluid; }
+	inline bool isFluid(const Vec3& pos) const { return getAt(pos) & TypeFluid; }
 	
 	inline bool isInflow(IndexInt idx) const { return get(idx) & TypeInflow; }
 	inline bool isInflow(int i, int j, int k) const { return get(i,j,k) & TypeInflow; }
 	inline bool isInflow(const Vec3i& pos) const { return get(pos) & TypeInflow; }
 	inline bool isInflow(const Vec3& pos) const { return getAt(pos) & TypeInflow; }
+	
 	inline bool isEmpty(IndexInt idx) const { return get(idx) & TypeEmpty; }
 	inline bool isEmpty(int i, int j, int k) const { return get(i,j,k) & TypeEmpty; }
 	inline bool isEmpty(const Vec3i& pos) const { return get(pos) & TypeEmpty; }
 	inline bool isEmpty(const Vec3& pos) const { return getAt(pos) & TypeEmpty; }
+	
 	inline bool isOutflow(IndexInt idx) const { return get(idx) & TypeOutflow; }
 	inline bool isOutflow(int i, int j, int k) const { return get(i, j, k) & TypeOutflow; }
 	inline bool isOutflow(const Vec3i& pos) const { return get(pos) & TypeOutflow; }
 	inline bool isOutflow(const Vec3& pos) const { return getAt(pos) & TypeOutflow; }
+	
 	inline bool isOpen(IndexInt idx) const { return get(idx) & TypeOpen; }
 	inline bool isOpen(int i, int j, int k) const { return get(i, j, k) & TypeOpen; }
 	inline bool isOpen(const Vec3i& pos) const { return get(pos) & TypeOpen; }
 	inline bool isOpen(const Vec3& pos) const { return getAt(pos) & TypeOpen; }
+	
 	inline bool isStick(IndexInt idx) const { return get(idx) & TypeStick; }
 	inline bool isStick(int i, int j, int k) const { return get(i,j,k) & TypeStick; }
 	inline bool isStick(const Vec3i& pos) const { return get(pos) & TypeStick; }
 	inline bool isStick(const Vec3& pos) const { return getAt(pos) & TypeStick; }
+	
 	inline bool isSolid(IndexInt idx) const { return get(idx) & TypeSolid; }
 	inline bool isSolid(int i, int j, int k) const { return get(i,j,k) & TypeSolid; }
 	inline bool isSolid(const Vec3i& pos) const { return get(pos) & TypeSolid; }
