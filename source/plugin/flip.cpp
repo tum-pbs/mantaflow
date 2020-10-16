@@ -161,11 +161,6 @@ PYTHON() void sampleShapeWithParticles(const Shape& shape, const FlagGrid& flags
 }
 
 //! mark fluid cells and helpers
-KERNEL() void knClearFluidFlags(FlagGrid& flags, int dummy=0) {
-	if (flags.isFluid(i,j,k)) {
-		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid;
-	}
-}
 KERNEL(bnd=1) 
 void knSetNbObstacle(FlagGrid& nflags, const FlagGrid& flags, const Grid<Real>& phiObs) {
 	if ( phiObs(i,j,k)>0. ) return;
@@ -182,11 +177,18 @@ void knSetNbObstacle(FlagGrid& nflags, const FlagGrid& flags, const Grid<Real>& 
 		if(set) nflags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeFluid) & ~FlagGrid::TypeEmpty;
 	}
 }
+
+KERNEL() void knClearFluidFlags(FlagGrid& flags, int dummy=0) {
+	if (flags.isFluid(i,j,k)) {
+		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid;
+	}
+}
+
 PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
 	// remove all fluid cells
 	knClearFluidFlags(flags, 0);
 	
-	// mark all particles in flaggrid as fluid
+	// mark fluid particles in flaggrid as fluid
 	for(IndexInt idx=0; idx<parts.size(); idx++) {
 		
 		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
@@ -206,8 +208,12 @@ PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, 
 }
 
 // KERNEL() void knClearFluidSolidFlags(FlagGrid& flags, int dummy=0) {
-// 	if (flags.isFluid(i,j,k) || flags.isSolid(i,j,k)) {
-// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & (~FlagGrid::TypeFluid || ~FlagGrid::TypeSolid);
+// 	if (flags.isFluid(i,j,k)) {
+// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid);
+// 	}
+
+// 	if (flags.isSolid(i,j,k)) {
+// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
 // 	}
 // }
 
@@ -216,15 +222,15 @@ PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, 
 // 	knClearFluidSolidFlags(flags, 0);
 	
 // 	// mark all particles in flaggrid as fluid
-// 	for(IndexInt idx=0; idx<parts.size(); idx++) {
+// 	// for(IndexInt idx=0; idx<parts.size(); idx++) {
 		
-// 		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
+// 	// 	if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
 		
-// 		Vec3i p = toVec3i( parts.getPos(idx) );
+// 	// 	Vec3i p = toVec3i( parts.getPos(idx) );
 		
-// 		if (flags.isInBounds(p) && flags.isEmpty(p))
-// 			flags(p) = (flags(p) | FlagGrid::TypeFluid | FlagGrid::TypeSolid) & ~FlagGrid::TypeEmpty;
-// 	}
+// 	// 	if (flags.isInBounds(p) && flags.isEmpty(p))
+// 	// 		flags(p) = (flags(p) | FlagGrid::TypeFluid | FlagGrid::TypeSolid) & ~FlagGrid::TypeEmpty;
+// 	// }
 
 // 	// special for second order obstacle BCs, check empty cells in boundary region
 // 	if(phiObs) {
@@ -234,33 +240,41 @@ PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, 
 // 	}
 // }
 
+// KERNEL() void knClearSolidFlags(FlagGrid& flags, int dummy=0) {
+// 	if (flags.isSolid(i,j,k)) {
+// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
+// 	}
+// }
+
+// PYTHON() void markSolidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
+// 	// remove all solid cells
+// 	knClearSolidFlags(flags, 0);
+	
+// 	// Mark particles in a solid as solid in the flaggrid
+// 	for(IndexInt idx=0; idx<parts.size(); idx++) {
+// 		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
+		
+// 		Vec3i p = toVec3i( parts.getPos(idx) );
+		
+// 		if (parts.getStatus(idx) == FlagGrid::TypeSolid && flags.isInBounds(p) && flags.isEmpty(p))
+// 			flags(p) = (flags(p) | FlagGrid::TypeSolid) & ~FlagGrid::TypeEmpty;
+// 	}
+// }
+
 KERNEL() void knClearSolidFlags(FlagGrid& flags, int dummy=0) {
 	if (flags.isSolid(i,j,k)) {
 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
 	}
 }
 
-PYTHON() void markSolidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
+PYTHON() void clearSolidFlags(FlagGrid& flags, int dummy = 0) {
 	// remove all solid cells
 	knClearSolidFlags(flags, 0);
-	
-	// mark all particles in flaggrid as solid
-	for(IndexInt idx=0; idx<parts.size(); idx++) {
-		
-		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
-		
-		Vec3i p = toVec3i( parts.getPos(idx) );
-		
-		if (flags.isInBounds(p) && flags.isEmpty(p))
-			flags(p) = (flags(p) | FlagGrid::TypeSolid) & ~FlagGrid::TypeEmpty;
-	}
+}
 
-	// special for second order obstacle BCs, check empty cells in boundary region
-	if(phiObs) {
-		FlagGrid tmp(flags);
-		knSetNbObstacle(tmp, flags, *phiObs);
-		flags.swap(tmp);
-	}
+PYTHON() void markCellSolid(const int index, const BasicParticleSystem& particles, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
+	Vec3i p = toVec3i(particles.getPos(index));
+	flags(p) = FlagGrid::TypeSolid;
 }
 
 // for testing purposes only...

@@ -20,6 +20,7 @@
 #include "vectorbase.h"
 #include "grid.h"
 #include "kernel.h"
+#include "particle.h"
 #include <limits>
 
 using namespace std;
@@ -67,10 +68,21 @@ namespace Manta {
 		else                flags(i,j,k) = FlagGrid::TypeEmpty;
 	}
 
-	//! update obstacle and outflow flags from levelsets
-	//! optionally uses fill fractions for obstacle
 	PYTHON() void setSolidFlags(FlagGrid& flags, const Grid<Real>& phiSolid, const MACGrid* fractions=NULL, const Grid<Real>* phiOut=NULL, const Grid<Real>* phiIn=NULL, int boundaryWidth=1){
 		KnUpdateFlagsSolid(flags, fractions, phiSolid, phiOut, phiIn, boundaryWidth);
+	}
+
+	PYTHON() bool isParticleInSolid(const int index, const BasicParticleSystem& particles, FlagGrid& flags) {
+		bool inSolid;
+		
+		Vec3i position = toVec3i(particles.getPos(index));
+		
+		if (flags.isSolid(position))
+			inSolid = true;
+		else
+			inSolid = false;
+
+		return inSolid;
 	}
 
 	// Update solid flags from levelsets

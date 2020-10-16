@@ -42,7 +42,7 @@ KERNEL(bnd=1) void KnApplyForceField(const FlagGrid& flags, MACGrid& vel, const 
 		vel(i,j,k).z = (additive) ? vel(i,j,k).z+forceZ : forceZ;
 }
 
-//! add constant force between fl/fl and fl/em cells
+// ! add constant force between fl/fl and fl/em cells
 // KERNEL(bnd=1) void KnApplyForce(const FlagGrid& flags, MACGrid& vel, Vec3 force, const Grid<Real>* exclude, bool additive) {
 // 	bool curFluid = flags.isFluid(i,j,k);
 // 	bool curEmpty = flags.isEmpty(i,j,k);

@@ -343,7 +343,7 @@ public:
 	inline bool isStick(const Vec3i& pos) const { return get(pos) & TypeStick; }
 	inline bool isStick(const Vec3& pos) const { return getAt(pos) & TypeStick; }
 	
-	inline bool isSolid(IndexInt idx) const { return get(idx) & TypeSolid; }
+	PYTHON() inline bool isSolid(IndexInt idx) const { return get(idx) & TypeSolid; }
 	inline bool isSolid(int i, int j, int k) const { return get(i,j,k) & TypeSolid; }
 	inline bool isSolid(const Vec3i& pos) const { return get(pos) & TypeSolid; }
 	inline bool isSolid(const Vec3& pos) const { return getAt(pos) & TypeSolid; }
