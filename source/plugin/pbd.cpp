@@ -72,18 +72,59 @@ namespace Manta {
 		KnUpdateFlagsSolid(flags, fractions, phiSolid, phiOut, phiIn, boundaryWidth);
 	}
 
-	PYTHON() bool isParticleInSolid(const int index, const BasicParticleSystem& particles, FlagGrid& flags) {
-		bool inSolid;
+	PYTHON() void setStatusOfParticlesInSolid(BasicParticleSystem& particles, const FlagGrid& flags) {
 		
-		Vec3i position = toVec3i(particles.getPos(index));
-		
-		if (flags.isSolid(position))
-			inSolid = true;
-		else
-			inSolid = false;
-
-		return inSolid;
+		for(IndexInt index=0; index < particles.size(); index++) {
+			Vec3i position = toVec3i(particles.getPos(index));
+			
+			if (flags.isSolid(position))
+				particles.setStatus(index, particles.PSOLID);
+		}
 	}
+	
+	KERNEL() void knClearSolidFlags(FlagGrid& flags, int dummy=0) {
+		if (flags.isSolid(i,j,k)) {
+			flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
+		}	
+	}
+
+	PYTHON() void markSolidCells(const BasicParticleSystem& particles, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
+		// remove all solid cells
+		knClearSolidFlags(flags, 0);
+		
+		// Mark particles in a solid as solid in the flaggrid
+		for(IndexInt index = 0; index < particles.size(); index++) {
+			if (!particles.isActive(index) || (ptype && ((*ptype)[index] & exclude))) continue;
+			
+			Vec3i position = toVec3i(particles.getPos(index));
+			
+			if (particles.isSolid(index) && flags.isInBounds(position))
+				flags(position) = FlagGrid::TypeSolid;
+		}
+	}
+
+	// PYTHON() bool isParticleInSolid(const int index, const BasicParticleSystem& particles, FlagGrid& flags) {
+	// 	bool inSolid;
+		
+	// 	Vec3i position = toVec3i(particles.getPos(index));
+		
+	// 	if (flags.isSolid(position))
+	// 		inSolid = true;
+	// 	else
+	// 		inSolid = false;
+
+	// 	return inSolid;
+	// }
+	
+	// PYTHON() void clearSolidFlags(FlagGrid& flags, int dummy = 0) {
+	// 	// remove all solid cells
+	// 	knClearSolidFlags(flags, 0);
+	// }
+
+	// PYTHON() void markCellSolid(const int index, const BasicParticleSystem& particles, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
+	// 	Vec3i p = toVec3i(particles.getPos(index));
+	// 	flags(p) = FlagGrid::TypeSolid;
+	// }
 
 	// Update solid flags from levelsets
 	// PYTHON() void setSolidFlags(FlagGrid& flags, const Grid<Real>& phiSolid, int boundaryWidth=1) {

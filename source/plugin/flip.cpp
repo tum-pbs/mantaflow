@@ -207,82 +207,10 @@ PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, 
 	}
 }
 
-// KERNEL() void knClearFluidSolidFlags(FlagGrid& flags, int dummy=0) {
-// 	if (flags.isFluid(i,j,k)) {
-// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid);
-// 	}
-
-// 	if (flags.isSolid(i,j,k)) {
-// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
-// 	}
-// }
-
-// PYTHON() void markFluidSolidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
-// 	// remove all fluid and solid cells
-// 	knClearFluidSolidFlags(flags, 0);
-	
-// 	// mark all particles in flaggrid as fluid
-// 	// for(IndexInt idx=0; idx<parts.size(); idx++) {
-		
-// 	// 	if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
-		
-// 	// 	Vec3i p = toVec3i( parts.getPos(idx) );
-		
-// 	// 	if (flags.isInBounds(p) && flags.isEmpty(p))
-// 	// 		flags(p) = (flags(p) | FlagGrid::TypeFluid | FlagGrid::TypeSolid) & ~FlagGrid::TypeEmpty;
-// 	// }
-
-// 	// special for second order obstacle BCs, check empty cells in boundary region
-// 	if(phiObs) {
-// 		FlagGrid tmp(flags);
-// 		knSetNbObstacle(tmp, flags, *phiObs);
-// 		flags.swap(tmp);
-// 	}
-// }
-
-// KERNEL() void knClearSolidFlags(FlagGrid& flags, int dummy=0) {
-// 	if (flags.isSolid(i,j,k)) {
-// 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
-// 	}
-// }
-
-// PYTHON() void markSolidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
-// 	// remove all solid cells
-// 	knClearSolidFlags(flags, 0);
-	
-// 	// Mark particles in a solid as solid in the flaggrid
-// 	for(IndexInt idx=0; idx<parts.size(); idx++) {
-// 		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
-		
-// 		Vec3i p = toVec3i( parts.getPos(idx) );
-		
-// 		if (parts.getStatus(idx) == FlagGrid::TypeSolid && flags.isInBounds(p) && flags.isEmpty(p))
-// 			flags(p) = (flags(p) | FlagGrid::TypeSolid) & ~FlagGrid::TypeEmpty;
-// 	}
-// }
-
-KERNEL() void knClearSolidFlags(FlagGrid& flags, int dummy=0) {
-	if (flags.isSolid(i,j,k)) {
-		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeSolid;
-	}
-}
-
-PYTHON() void clearSolidFlags(FlagGrid& flags, int dummy = 0) {
-	// remove all solid cells
-	knClearSolidFlags(flags, 0);
-}
-
-PYTHON() void markCellSolid(const int index, const BasicParticleSystem& particles, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
-	Vec3i p = toVec3i(particles.getPos(index));
-	flags(p) = FlagGrid::TypeSolid;
-}
-
 // for testing purposes only...
 PYTHON() void testInitGridWithPos(Grid<Real>& grid) {
 	FOR_IJK(grid) { grid(i,j,k) = norm( Vec3(i,j,k) ); }
 }
-
-
 
 //! helper to calculate particle radius factor to cover the diagonal of a cell in 2d/3d
 inline Real calculateRadiusFactor(const Grid<Real>& grid, Real factor) {

@@ -1,7 +1,8 @@
 #
-# Very simple flip without level set
-# and without any particle resampling
+# Bacilli on Agar
 # 
+# 
+
 from manta import *
 
 # solver params
@@ -26,7 +27,7 @@ tmpVec3  = s.create(VecGrid)
 pp       = s.create(BasicParticleSystem) 
 # add velocity data to particles
 pVel     = pp.create(PdataVec3)
-mesh     = s.create(Mesh) 
+mesh     = s.create(Mesh)
 
 # scene setup
 flags.initDomain(boundaryWidth=0) 
@@ -65,15 +66,7 @@ flags.updateFromLevelset(phi)
 # There's no resamplig here, so we need _LOTS_ of particles...
 sampleFlagsWithParticles(flags=flags, parts=pp, discretization=particleNumber, randomness=0.2)
 
-indices = []
-
-for index in range(pp.pySize()): 
-	inSolid = isParticleInSolid(index=index, particles=pp, flags=flags)
-
-	if inSolid:
-		indices.append(index)
-		
-# print(indices)
+setStatusOfParticlesInSolid(particles=pp, flags=flags)
 
 if (GUI):
 	gui = Gui()
@@ -110,11 +103,8 @@ for t in range(2500):
 	mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
 	extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
 	markFluidCells(parts=pp, flags=flags)
-	clearSolidFlags(flags = flags)
+	markSolidCells(particles=pp, flags=flags)
 
-	for index in indices:
-		markCellSolid(index=index, particles=pp, flags=flags)
-	
 	addGravity(flags=flags, vel=vel, gravity=(0,-0.002,0))
 
 	# pressure solve
