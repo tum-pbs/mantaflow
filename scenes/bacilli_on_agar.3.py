@@ -63,7 +63,7 @@ phi.join(phiCylinder)
 # Set the flags to fluid for the agar and cylinder
 flags.updateFromLevelset(phi)
 
-# There's no resamplig here, so we need _LOTS_ of particles...
+# There's no resampling here, so we need _LOTS_ of particles...
 sampleFlagsWithParticles(flags=flags, parts=pp, discretization=particleNumber, randomness=0.2)
 
 setStatusOfParticlesInSolid(particles=pp, flags=flags)
@@ -108,9 +108,9 @@ for t in range(2500):
 	addGravity(flags=flags, vel=vel, gravity=(0,-0.002,0))
 
 	# pressure solve
-	setWallBcs(flags=flags, vel=vel)    
+	# setWallBcs(flags=flags, vel=vel)    
 	solvePressure(flags=flags, vel=vel, pressure=pressure)
-	setWallBcs(flags=flags, vel=vel)
+	# setWallBcs(flags=flags, vel=vel)
 
 	# we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
 	extrapolateMACSimple(flags=flags, vel=vel)
