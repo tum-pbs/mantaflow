@@ -106,7 +106,70 @@ void knCorrectVelocity(const FlagGrid& flags, MACGrid& vel, const Grid<Real>& pr
 			else                       vel[idx].z  = 0.f;
 		}
 	}
+
+	if(flags.isSolid(idx)) {
+		if(                flags.isSolid(i-1,j,k)) vel[idx].x -= (pressure[idx] - pressure(i-1,j,k));
+		if(                flags.isSolid(i,j-1,k)) vel[idx].y -= (pressure[idx] - pressure(i,j-1,k));
+		if(flags.is3D() && flags.isSolid(i,j,k-1)) vel[idx].z -= (pressure[idx] - pressure(i,j,k-1));
+		
+		if(                flags.isEmpty(i-1,j,k)) vel[idx].x -= pressure[idx];
+		if(                flags.isEmpty(i,j-1,k)) vel[idx].y -= pressure[idx];
+		if(flags.is3D() && flags.isEmpty(i,j,k-1)) vel[idx].z -= pressure[idx];
+	} else if(flags.isEmpty(idx)&&!flags.isOutflow(idx)) { // don't change velocities in outflow cells
+		if(flags.isSolid(i-1,j,k))         vel[idx].x += pressure(i-1,j,k);
+		else                               vel[idx].x  = 0.f;
+		if(flags.isSolid(i,j-1,k))         vel[idx].y += pressure(i,j-1,k);
+		else                               vel[idx].y  = 0.f;
+		if(flags.is3D()) {
+			if(flags.isSolid(i,j,k-1)) vel[idx].z += pressure(i,j,k-1);
+			else                       vel[idx].z  = 0.f;
+		}
+	}
 }
+
+// KERNEL(bnd = 1)
+// void knCorrectVelocity(const FlagGrid& flags, MACGrid& vel, const Grid<Real>& pressure)
+// {
+// 	const IndexInt idx = flags.index(i,j,k);
+// 	if(flags.isFluid(idx)) {
+// 		if(                flags.isFluid(i-1,j,k)) vel[idx].x -= (pressure[idx] - pressure(i-1,j,k));
+// 		if(                flags.isFluid(i,j-1,k)) vel[idx].y -= (pressure[idx] - pressure(i,j-1,k));
+// 		if(flags.is3D() && flags.isFluid(i,j,k-1)) vel[idx].z -= (pressure[idx] - pressure(i,j,k-1));
+
+// 		if(                flags.isEmpty(i-1,j,k)) vel[idx].x -= pressure[idx];
+// 		if(                flags.isEmpty(i,j-1,k)) vel[idx].y -= pressure[idx];
+// 		if(flags.is3D() && flags.isEmpty(i,j,k-1)) vel[idx].z -= pressure[idx];
+// 	} else if(flags.isEmpty(idx)&&!flags.isOutflow(idx)) { // don't change velocities in outflow cells
+// 		if(flags.isFluid(i-1,j,k))         vel[idx].x += pressure(i-1,j,k);
+// 		else                               vel[idx].x  = 0.f;
+// 		if(flags.isFluid(i,j-1,k))         vel[idx].y += pressure(i,j-1,k);
+// 		else                               vel[idx].y  = 0.f;
+// 		if(flags.is3D()) {
+// 			if(flags.isFluid(i,j,k-1)) vel[idx].z += pressure(i,j,k-1);
+// 			else                       vel[idx].z  = 0.f;
+// 		}
+// 	}
+
+// 	if(flags.isSolid(idx)) {
+// 		if(                flags.isSolid(i-1,j,k)) vel[idx].x -= (pressure[idx] - pressure(i-1,j,k));
+// 		if(                flags.isSolid(i,j-1,k)) vel[idx].y -= (pressure[idx] - pressure(i,j-1,k));
+// 		if(flags.is3D() && flags.isSolid(i,j,k-1)) vel[idx].z -= (pressure[idx] - pressure(i,j,k-1));
+		
+// 		if(                flags.isEmpty(i-1,j,k)) vel[idx].x -= pressure[idx];
+// 		if(                flags.isEmpty(i,j-1,k)) vel[idx].y -= pressure[idx];
+// 		if(flags.is3D() && flags.isEmpty(i,j,k-1)) vel[idx].z -= pressure[idx];
+// 	} else if(flags.isEmpty(idx)&&!flags.isOutflow(idx)) { // don't change velocities in outflow cells
+// 		if(flags.isSolid(i-1,j,k))         vel[idx].x += pressure(i-1,j,k);
+// 		else                               vel[idx].x  = 0.f;
+// 		if(flags.isSolid(i,j-1,k))         vel[idx].y += pressure(i,j-1,k);
+// 		else                               vel[idx].y  = 0.f;
+// 		if(flags.is3D()) {
+// 			if(flags.isSolid(i,j,k-1)) vel[idx].z += pressure(i,j,k-1);
+// 			else                       vel[idx].z  = 0.f;
+// 		}
+// 	}
+// }
+
 
 // *****************************************************************************
 // Ghost fluid helpers
@@ -360,7 +423,7 @@ PYTHON() void solvePressureSystem(
 						  topCenter - Vec3i(0,2,0) };
 
 			for (Vec3i pos : preferredPos) {
-				if(flags.isFluid(pos)) {
+				if(flags.isFluid(pos) || flags.isSolid(pos)) {
 					fixPidx = flags.index(pos);
 					break;
 				}
@@ -369,7 +432,7 @@ PYTHON() void solvePressureSystem(
 			// 2) Then search whole domain
 			if(fixPidx == -1) {
 				FOR_IJK_BND(flags,1) {
-					if(flags.isFluid(i,j,k)) {
+					if(flags.isFluid(i,j,k) || flags.isSolid(i,j,k)) {
 						fixPidx = flags.index(i,j,k);
 						// break FOR_IJK_BND loop
 						i = flags.getSizeX()-1;
@@ -468,6 +531,7 @@ PYTHON() void correctVelocity(
 	const Real surfTens = 0.)
 {
 	knCorrectVelocity(flags, vel, pressure);
+	
 	if(phi) {
 		knCorrectVelocityGhostFluid(vel, flags, pressure, *phi, gfClamp,  curv, surfTens);
 		// improve behavior of clamping for large time steps:

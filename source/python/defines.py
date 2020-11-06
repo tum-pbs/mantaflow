@@ -28,6 +28,7 @@ FlagEmpty    = 4
 FlagInflow   = 8
 FlagOutflow  = 16
 FlagStick    = 64
+FlagSolid    = 128
 FlagReserved = 256
 # and same for FlagGrid::CellType enum names:
 TypeFluid    = 1
@@ -36,6 +37,7 @@ TypeEmpty    = 4
 TypeInflow   = 8
 TypeOutflow  = 16
 TypeStick    = 64
+TypeSolid    = 128
 TypeReserved = 256
 
 # integration mode

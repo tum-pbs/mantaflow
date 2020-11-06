@@ -42,19 +42,51 @@ KERNEL(bnd=1) void KnApplyForceField(const FlagGrid& flags, MACGrid& vel, const 
 		vel(i,j,k).z = (additive) ? vel(i,j,k).z+forceZ : forceZ;
 }
 
-//! add constant force between fl/fl and fl/em cells
+// ! add constant force between fl/fl and fl/em cells
+// KERNEL(bnd=1) void KnApplyForce(const FlagGrid& flags, MACGrid& vel, Vec3 force, const Grid<Real>* exclude, bool additive) {
+// 	bool curFluid = flags.isFluid(i,j,k);
+// 	bool curEmpty = flags.isEmpty(i,j,k);
+// 	if (!curFluid && !curEmpty) return;
+// 	if (exclude && ((*exclude)(i,j,k) < 0.)) return;
+
+// 	if (flags.isFluid(i-1,j,k) || (curFluid && flags.isEmpty(i-1,j,k))) 
+// 		vel(i,j,k).x = (additive) ? vel(i,j,k).x+force.x : force.x;
+// 	if (flags.isFluid(i,j-1,k) || (curFluid && flags.isEmpty(i,j-1,k))) 
+// 		vel(i,j,k).y = (additive) ? vel(i,j,k).y+force.y : force.y;
+// 	if (vel.is3D() && (flags.isFluid(i,j,k-1) || (curFluid && flags.isEmpty(i,j,k-1))))
+// 		vel(i,j,k).z = (additive) ? vel(i,j,k).z+force.z : force.z;
+// }
+
 KERNEL(bnd=1) void KnApplyForce(const FlagGrid& flags, MACGrid& vel, Vec3 force, const Grid<Real>* exclude, bool additive) {
 	bool curFluid = flags.isFluid(i,j,k);
+	bool curSolid = flags.isSolid(i,j,k);
 	bool curEmpty = flags.isEmpty(i,j,k);
-	if (!curFluid && !curEmpty) return;
+	
+	if (!curFluid && !curEmpty && !curSolid) return;
 	if (exclude && ((*exclude)(i,j,k) < 0.)) return;
 
+	// fl/fl and fl/em
 	if (flags.isFluid(i-1,j,k) || (curFluid && flags.isEmpty(i-1,j,k))) 
 		vel(i,j,k).x = (additive) ? vel(i,j,k).x+force.x : force.x;
+	
 	if (flags.isFluid(i,j-1,k) || (curFluid && flags.isEmpty(i,j-1,k))) 
 		vel(i,j,k).y = (additive) ? vel(i,j,k).y+force.y : force.y;
+	
 	if (vel.is3D() && (flags.isFluid(i,j,k-1) || (curFluid && flags.isEmpty(i,j,k-1))))
 		vel(i,j,k).z = (additive) ? vel(i,j,k).z+force.z : force.z;
+	
+	// solid/solid and solid/em
+	
+	if (flags.isSolid(i-1,j,k) || (curSolid && flags.isEmpty(i-1,j,k))) 
+		vel(i,j,k).x = (additive) ? vel(i,j,k).x+force.x : force.x;
+	
+	if (flags.isSolid(i,j-1,k) || (curSolid && flags.isEmpty(i,j-1,k))) 
+		vel(i,j,k).y = (additive) ? vel(i,j,k).y+force.y : force.y;
+	
+	if (vel.is3D() && (flags.isSolid(i,j,k-1) || (curSolid && flags.isEmpty(i,j,k-1))))
+		vel(i,j,k).z = (additive) ? vel(i,j,k).z+force.z : force.z;
+
+	// fluid/solid	
 }
 
 //! add gravity forces to all fluid cells, optionally  adapts to different grid sizes automatically
@@ -186,9 +218,11 @@ PYTHON() void setInflowBcs(MACGrid& vel, string dir, Vec3 value) {
 KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* obvel) {
 
 	bool curFluid = flags.isFluid(i,j,k);
+	bool curSolid = flags.isSolid(i,j,k);
 	bool curObs   = flags.isObstacle(i,j,k);
 	Vec3 bcsVel(0.,0.,0.);
-	if (!curFluid && !curObs) return;
+	
+	if (!curFluid && !curSolid && !curObs) return;
 
 	if (obvel) {
 		bcsVel.x = (*obvel)(i,j,k).x;
@@ -197,16 +231,21 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
 	}
 
 	// we use i>0 instead of bnd=1 to check outer wall
-	if (i>0 && flags.isObstacle(i-1,j,k))						 vel(i,j,k).x = bcsVel.x;
-	if (i>0 && curObs && flags.isFluid(i-1,j,k))				 vel(i,j,k).x = bcsVel.x;
-	if (j>0 && flags.isObstacle(i,j-1,k))						 vel(i,j,k).y = bcsVel.y;
-	if (j>0 && curObs && flags.isFluid(i,j-1,k))				 vel(i,j,k).y = bcsVel.y;
+	if (i > 0 && flags.isObstacle(i-1,j,k))			vel(i,j,k).x = bcsVel.x;
+	if (i > 0 && curObs && flags.isFluid(i-1,j,k))	vel(i,j,k).x = bcsVel.x;
+	if (i > 0 && curObs && flags.isSolid(i-1,j,k))	vel(i,j,k).x = bcsVel.x;
+	if (j > 0 && flags.isObstacle(i,j-1,k))			vel(i,j,k).y = bcsVel.y;
+	if (j > 0 && curObs && flags.isFluid(i,j-1,k))	vel(i,j,k).y = bcsVel.y;
+	if (j > 0 && curObs && flags.isSolid(i,j-1,k))	vel(i,j,k).y = bcsVel.y;
 
-	if(!vel.is3D()) {                            				vel(i,j,k).z = 0; } else {
-	if (k>0 && flags.isObstacle(i,j,k-1))		 				vel(i,j,k).z = bcsVel.z;
-	if (k>0 && curObs && flags.isFluid(i,j,k-1)) 				vel(i,j,k).z = bcsVel.z; }
+	if(!vel.is3D()) {vel(i,j,k).z = 0;} 
+	else {
+		if (k > 0 && flags.isObstacle(i,j,k-1))		 	vel(i,j,k).z = bcsVel.z;
+		if (k > 0 && curObs && flags.isFluid(i,j,k-1)) 	vel(i,j,k).z = bcsVel.z;
+		if (k > 0 && curObs && flags.isSolid(i,j,k-1)) 	vel(i,j,k).z = bcsVel.z;
+	}
 	
-	if (curFluid) {
+	if (curFluid || curSolid) {
 		if ((i>0 && flags.isStick(i-1,j,k)) || (i<flags.getSizeX()-1 && flags.isStick(i+1,j,k)))
 			vel(i,j,k).y = vel(i,j,k).z = 0;
 		if ((j>0 && flags.isStick(i,j-1,k)) || (j<flags.getSizeY()-1 && flags.isStick(i,j+1,k)))
@@ -215,6 +254,39 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
 			vel(i,j,k).x = vel(i,j,k).y = 0;
 	}
 }
+
+// KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* obvel) {
+
+// 	bool curFluid = flags.isFluid(i,j,k);
+// 	bool curObs   = flags.isObstacle(i,j,k);
+// 	Vec3 bcsVel(0.,0.,0.);
+// 	if (!curFluid && !curObs) return;
+
+// 	if (obvel) {
+// 		bcsVel.x = (*obvel)(i,j,k).x;
+// 		bcsVel.y = (*obvel)(i,j,k).y;
+// 		if((*obvel).is3D()) bcsVel.z = (*obvel)(i,j,k).z;
+// 	}
+
+// 	// we use i>0 instead of bnd=1 to check outer wall
+// 	if (i>0 && flags.isObstacle(i-1,j,k))						 vel(i,j,k).x = bcsVel.x;
+// 	if (i>0 && curObs && flags.isFluid(i-1,j,k))				 vel(i,j,k).x = bcsVel.x;
+// 	if (j>0 && flags.isObstacle(i,j-1,k))						 vel(i,j,k).y = bcsVel.y;
+// 	if (j>0 && curObs && flags.isFluid(i,j-1,k))				 vel(i,j,k).y = bcsVel.y;
+
+// 	if(!vel.is3D()) {                            				vel(i,j,k).z = 0; } else {
+// 	if (k>0 && flags.isObstacle(i,j,k-1))		 				vel(i,j,k).z = bcsVel.z;
+// 	if (k>0 && curObs && flags.isFluid(i,j,k-1)) 				vel(i,j,k).z = bcsVel.z; }
+	
+// 	if (curFluid) {
+// 		if ((i>0 && flags.isStick(i-1,j,k)) || (i<flags.getSizeX()-1 && flags.isStick(i+1,j,k)))
+// 			vel(i,j,k).y = vel(i,j,k).z = 0;
+// 		if ((j>0 && flags.isStick(i,j-1,k)) || (j<flags.getSizeY()-1 && flags.isStick(i,j+1,k)))
+// 			vel(i,j,k).x = vel(i,j,k).z = 0;
+// 		if (vel.is3D() && ((k>0 && flags.isStick(i,j,k-1)) || (k<flags.getSizeZ()-1 && flags.isStick(i,j,k+1))))
+// 			vel(i,j,k).x = vel(i,j,k).y = 0;
+// 	}
+// }
 
 //! set wall BCs for fill fraction mode, note - only needs obstacle SDF
 KERNEL() void KnSetWallBcsFrac(const FlagGrid& flags, const MACGrid& vel, MACGrid& velTarget, const MACGrid* obvel,

@@ -146,14 +146,14 @@ while s.frame < frames:
 	
 	s.step()
 
-	if (lastFrame!=s.frame):
-		# generate data for flip03_gen.py surface generation scene
-		if saveParts:
-			pp.save( 'flipParts_%04d.uni' % s.frame ); 
-		if 0 and (GUI):
-			gui.screenshot( 'flip06_%04d.png' % s.frame );
+	# if (lastFrame!=s.frame):
+	# 	# generate data for flip03_gen.py surface generation scene
+	# 	if saveParts:
+	# 		pp.save( 'flipParts_%04d.uni' % s.frame ); 
+	# 	if 0 and (GUI):
+	# 		gui.screenshot( 'flip06_%04d.png' % s.frame );
 
-	#s.printMemInfo()
-	lastFrame = s.frame;
+	# #s.printMemInfo()
+	# lastFrame = s.frame;
 
 

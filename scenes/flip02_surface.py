@@ -8,6 +8,7 @@ dim = 3
 res = 64
 #res = 128
 gs = vec3(res,res,res)
+
 if (dim==2):
 	gs.z=1
 s = Solver(name='main', gridSize = gs, dim=dim)

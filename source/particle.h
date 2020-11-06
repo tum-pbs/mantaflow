@@ -38,6 +38,7 @@ public:
 		PBUBBLE       = (1<<2),
 		PFOAM         = (1<<3),
 		PTRACER       = (1<<4),
+		PSOLID		  =	(1<<5),
 		PDELETE       = (1<<10), // mark as deleted, will be deleted in next compress() step
 		PINVALID      = (1<<30), // unused
 	};
@@ -124,6 +125,7 @@ public:
 	inline bool isBubble(IndexInt idx) const { DEBUG_ONLY(checkPartIndex(idx)); return (mData[idx].flag & PBUBBLE); }
 	inline bool isFoam(IndexInt idx) const { DEBUG_ONLY(checkPartIndex(idx)); return (mData[idx].flag & PFOAM); }
 	inline bool isTracer(IndexInt idx) const { DEBUG_ONLY(checkPartIndex(idx)); return (mData[idx].flag & PTRACER); }
+	inline bool isSolid(IndexInt idx) const { DEBUG_ONLY(checkPartIndex(idx)); return (mData[idx].flag & PSOLID); }
 
 	//! update status
 	inline void setStatus(IndexInt idx, const int status) { DEBUG_ONLY(checkPartIndex(idx)); mData[idx].flag = status; }
@@ -200,6 +202,10 @@ public:
 
 	//! save to text file
 	void writeParticlesText(const std::string name) const;
+
+	//! save to NumPy text file
+	void writeParticlesNumPyText(const std::string name) const;
+
 	//! other output formats
 	void writeParticlesRawPositionsGz(const std::string name) const;
 	void writeParticlesRawVelocityGz(const std::string name) const;
@@ -517,6 +523,7 @@ void ParticleSystem<S>::advectInGrid(
 {
 	// position clamp requires old positions, backup
 	ParticleDataImpl<Vec3> *posOld = NULL;
+	
 	if(!deleteInObstacle) {
 		posOld = new ParticleDataImpl<Vec3>(this->getParent());
 		posOld->resize(mData.size());

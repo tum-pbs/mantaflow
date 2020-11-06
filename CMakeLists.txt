@@ -33,8 +33,10 @@ endif()
 
 if(APPLE)
 	if(NOT CMAKE_PREFIX_PATH)
-		set(CMAKE_PREFIX_PATH "/usr/local/opt/qt5/") #  mac/homebrew (version independent)
-		#set(CMAKE_PREFIX_PATH "/home/myname/qt/5.5/clang_64") #  other...
+		set(CMAKE_PREFIX_PATH "/usr/local/opt/qt5/")  # mac/homebrew (version independent)
+		# set(CMAKE_PREFIX_PATH "/User/Cesar/anaconda3/") # Anaconda QT
+		# set(CMAKE_PREFIX_PATH "/home/myname/qt/5.5/clang_64") #  other...
+		# set(CMAKE_PREFIX_PATH "/Users/Cesar/Qt/5.15.0/clang_64/")
 	endif()
 endif()
 
@@ -212,6 +214,7 @@ set(PP_SOURCES
 	source/plugin/vortexplugins.cpp
 	source/plugin/waveletturbulence.cpp
 	source/plugin/waves.cpp
+	source/plugin/solids.cpp
 	source/python/defines.py
 	source/test.cpp
 )
@@ -445,41 +448,41 @@ endif(DOXYGEN_FOUND)
 
 # Python 
 # note - if configuration fails, comment out the auto block below, and manually set the following two paths:
-#set(PYTHON_INCLUDE_DIRS "PYTHON_PATH/include")
-#set(PYTHON_LIBRARIES "PYTHON_PATH/libs/pythonX.Y.lib/so")
+set(PYTHON_INCLUDE_DIRS "/Users/Cesar/anaconda3/include/python3.7m/")
+set(PYTHON_LIBRARIES "/Users/Cesar/anaconda3/lib/libpython3.7m.dylib")
 # auto block
-if(WIN32)
-	# convenience override for windows, typically the auto find doesnt work, so fall back to WIN_PYTHON_PATH
-	find_package(PythonLibs ${PYTHON_VER_ID} QUIET)
-	if(NOT PYTHONLIBS_FOUND)
-		set(PYTHON_INCLUDE_DIRS "${WIN_PYTHON_PATH}/include")
-		set(PYTHON_LIBRARIES "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}.lib")
-	endif()
-else()
-	# try to configure from python itself first
-	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('INCLUDEPY'))" OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS) 
-	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LIBDIR'))"    OUTPUT_VARIABLE PYTHON_LIB1) 
-	if(APPLE)
-		# LDLIBRARY doesnt seem to work for Macs...
-		set(PYTHON_LIB2 "../Python")
-	else()
-		execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LDLIBRARY'))" OUTPUT_VARIABLE PYTHON_LIB2) 
-	endif()
-	set(PYTHON_LIBRARIES "${PYTHON_LIB1}/${PYTHON_LIB2}")
-	if(EXISTS "${PYTHON_INCLUDE_DIRS}" AND EXISTS "${PYTHON_LIBRARIES}")
-		message("Found python configuration")
-	else()
-		# otherwise, fall back to cmake find
-		if(NOT PYTHON_VERSION)
-			find_package(PythonLibs REQUIRED) # use any
-		else()
-			find_package(PythonLibs ${PYTHON_VER_ID} EXACT QUIET) # fixed version
-		endif()
-		if(NOT PYTHONLIBS_FOUND)
-			message(FATAL_ERROR "No python found, please manually set PYTHON_VERSION for cmake, or PYTHON_ paths in CMakeLists.txt")
-		endif()
-	endif()
-endif()
+# if(WIN32)
+# 	# convenience override for windows, typically the auto find doesnt work, so fall back to WIN_PYTHON_PATH
+# 	find_package(PythonLibs ${PYTHON_VER_ID} QUIET)
+# 	if(NOT PYTHONLIBS_FOUND)
+# 		set(PYTHON_INCLUDE_DIRS "${WIN_PYTHON_PATH}/include")
+# 		set(PYTHON_LIBRARIES "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}.lib")
+# 	endif()
+# else()
+# 	# try to configure from python itself first
+# 	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('INCLUDEPY'))" OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS) 
+# 	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LIBDIR'))"    OUTPUT_VARIABLE PYTHON_LIB1) 
+# 	if(APPLE)
+# 		# LDLIBRARY doesnt seem to work for Macs...
+# 		set(PYTHON_LIB2 "../Python")
+# 	else()
+# 		execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LDLIBRARY'))" OUTPUT_VARIABLE PYTHON_LIB2) 
+# 	endif()
+# 	set(PYTHON_LIBRARIES "${PYTHON_LIB1}/${PYTHON_LIB2}")
+# 	if(EXISTS "${PYTHON_INCLUDE_DIRS}" AND EXISTS "${PYTHON_LIBRARIES}")
+# 		message("Found python configuration")
+# 	else()
+# 		# otherwise, fall back to cmake find
+# 		if(NOT PYTHON_VERSION)
+# 			find_package(PythonLibs REQUIRED) # use any
+# 		else()
+# 			find_package(PythonLibs ${PYTHON_VER_ID} EXACT QUIET) # fixed version
+# 		endif()
+# 		if(NOT PYTHONLIBS_FOUND)
+# 			message(FATAL_ERROR "No python found, please manually set PYTHON_VERSION for cmake, or PYTHON_ paths in CMakeLists.txt")
+# 		endif()
+# 	endif()
+# endif()
 # end auto block, python config done
 list(APPEND INCLUDE_PATHS ${PYTHON_INCLUDE_DIRS})
 list(APPEND F_LIBS ${PYTHON_LIBRARIES})

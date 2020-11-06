@@ -21,7 +21,7 @@ interval   = 1
 upres = 2.0
 
 # output file name so that blender can directly read it...
-meshfile = 'fluidsurface_final_%04d.bobj.gz' 
+meshfile = 'frames/fluidsurface_final_%04d.bobj.gz' 
 
 # resolution for level set / output mesh
 refName = ("ref_" + (partfile % 0) ) 

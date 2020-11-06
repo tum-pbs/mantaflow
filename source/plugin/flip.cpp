@@ -29,6 +29,31 @@ namespace Manta {
 // init
 
 //! note - this is a simplified version , sampleLevelsetWithParticles has more functionality
+// PYTHON() void sampleFlagsWithParticles(const FlagGrid& flags, BasicParticleSystem& parts,
+// 				       const int discretization, const Real randomness)
+// {
+// 	const bool is3D = flags.is3D();
+// 	const Real jlen = randomness / discretization;
+// 	const Vec3 disp (1.0 / discretization, 1.0 / discretization, 1.0/discretization);
+// 	RandomStream mRand(9832);
+ 
+// 	FOR_IJK_BND(flags, 0) {
+// 		if (flags.isObstacle(i,j,k)) continue;
+// 		if (flags.isFluid(i,j,k)) {
+// 			const Vec3 pos (i,j,k);
+// 			for (int dk=0; dk<(is3D ? discretization : 1); dk++)
+// 			for (int dj=0; dj<discretization; dj++)
+// 			for (int di=0; di<discretization; di++) {
+// 				Vec3 subpos = pos + disp * Vec3(0.5+di, 0.5+dj, 0.5+dk);
+// 				subpos += jlen * (Vec3(1,1,1) - 2.0 * mRand.getVec3());
+// 				if(!is3D) subpos[2] = 0.5; 
+// 				parts.addBuffered(subpos);
+// 			}
+// 		}
+// 	}
+// 	parts.insertBufferedParticles();
+// }
+
 PYTHON() void sampleFlagsWithParticles(const FlagGrid& flags, BasicParticleSystem& parts,
 				       const int discretization, const Real randomness)
 {
@@ -39,7 +64,9 @@ PYTHON() void sampleFlagsWithParticles(const FlagGrid& flags, BasicParticleSyste
  
 	FOR_IJK_BND(flags, 0) {
 		if ( flags.isObstacle(i,j,k) ) continue;
-		if ( flags.isFluid(i,j,k) ) {
+		
+		// Includes the solid flags
+		if ( flags.isFluid(i,j,k) || flags.isSolid(i,j,k) ) {
 			const Vec3 pos (i,j,k);
 			for (int dk=0; dk<(is3D ? discretization : 1); dk++)
 			for (int dj=0; dj<discretization; dj++)
@@ -134,11 +161,6 @@ PYTHON() void sampleShapeWithParticles(const Shape& shape, const FlagGrid& flags
 }
 
 //! mark fluid cells and helpers
-KERNEL() void knClearFluidFlags(FlagGrid& flags, int dummy=0) {
-	if (flags.isFluid(i,j,k)) {
-		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid;
-	}
-}
 KERNEL(bnd=1) 
 void knSetNbObstacle(FlagGrid& nflags, const FlagGrid& flags, const Grid<Real>& phiObs) {
 	if ( phiObs(i,j,k)>0. ) return;
@@ -155,14 +177,24 @@ void knSetNbObstacle(FlagGrid& nflags, const FlagGrid& flags, const Grid<Real>& 
 		if(set) nflags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeFluid) & ~FlagGrid::TypeEmpty;
 	}
 }
+
+KERNEL() void knClearFluidFlags(FlagGrid& flags, int dummy=0) {
+	if (flags.isFluid(i,j,k)) {
+		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid;
+	}
+}
+
 PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
 	// remove all fluid cells
 	knClearFluidFlags(flags, 0);
 	
-	// mark all particles in flaggrid as fluid
+	// mark fluid particles in flaggrid as fluid
 	for(IndexInt idx=0; idx<parts.size(); idx++) {
+		
 		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
+		
 		Vec3i p = toVec3i( parts.getPos(idx) );
+		
 		if (flags.isInBounds(p) && flags.isEmpty(p))
 			flags(p) = (flags(p) | FlagGrid::TypeFluid) & ~FlagGrid::TypeEmpty;
 	}
@@ -179,8 +211,6 @@ PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, 
 PYTHON() void testInitGridWithPos(Grid<Real>& grid) {
 	FOR_IJK(grid) { grid(i,j,k) = norm( Vec3(i,j,k) ); }
 }
-
-
 
 //! helper to calculate particle radius factor to cover the diagonal of a cell in 2d/3d
 inline Real calculateRadiusFactor(const Grid<Real>& grid, Real factor) {
@@ -564,6 +594,7 @@ void knMapLinearVec3ToMACGrid(const BasicParticleSystem& p, const FlagGrid& flag
 			      const ParticleDataImpl<Vec3>& pvel, const ParticleDataImpl<int>* ptype, const int exclude)
 {
 	unusedParameter(flags);
+	
 	if (!p.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) return;
 	vel.setInterpolated( p[idx].pos, pvel[idx], &tmp[0] );
 }
