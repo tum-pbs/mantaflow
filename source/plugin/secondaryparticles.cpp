@@ -27,7 +27,7 @@ Real clampPotential(Real potential, Real tauMin, Real tauMax) {
 }
 
 // computes all three potentials(trapped air, wave crest, kinetic energy) and the neighbor ratio for every fluid cell and stores it in the respective grid.
-// Is less readable but significantly faster than using seperate potential computation
+// Is less readable but significantly faster than using separate potential computation
 KERNEL(bnd = radius)
 void knFlipComputeSecondaryParticlePotentials(
 	Grid<Real> &potTA, Grid<Real> &potWC, Grid<Real> &potKE, Grid<Real> &neighborRatio, const FlagGrid &flags, const MACGrid &v, const Grid<Vec3> &normal,
